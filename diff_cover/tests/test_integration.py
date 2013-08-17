@@ -12,6 +12,7 @@ import tempfile
 import shutil
 from diff_cover.tool import main
 from diff_cover.diff_reporter import GitDiffError
+from diff_cover.tests.helpers import fixture_path
 
 
 class ToolsIntegrationBase(unittest.TestCase):
@@ -29,7 +30,7 @@ class ToolsIntegrationBase(unittest.TestCase):
 
         # Set the CWD to the fixtures dir
         self._old_cwd = os.getcwd()
-        os.chdir(self._fixture_path())
+        os.chdir(fixture_path(''))
 
     def tearDown(self):
         """
@@ -112,12 +113,6 @@ class ToolsIntegrationBase(unittest.TestCase):
             report = string_buffer.getvalue()
             expected = expected_file.read()
             self.assertEqual(report, expected)
-
-    def _fixture_path(self):
-        """
-        Return an absolute path to the the test fixture directory
-        """
-        return os.path.join(os.path.dirname(__file__), 'fixtures')
 
     def _set_sys_args(self, argv):
         """
