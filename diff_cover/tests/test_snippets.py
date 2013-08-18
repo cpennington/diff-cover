@@ -25,8 +25,13 @@ class SnippetTest(unittest.TestCase):
 
     def test_style_defs(self):
         style_str = Snippet.style_defs()
-        expected_style = load_fixture(self.FIXTURES['style']).strip()
-        self.assertEqual(expected_style, style_str)
+        expected_styles = load_fixture(self.FIXTURES['style']).strip()
+
+        # Check that a sample of the styles are present
+        # (use only a sample to make the test more robust
+        # against Pygment changes).
+        for expect_line in expected_styles.split('\n'):
+            self.assertIn(expect_line, style_str)
 
     def test_format(self):
         self._assert_format(
