@@ -3,6 +3,11 @@
     <head>
         <meta http-equiv='Content-Type' content='text/html; charset=utf-8'>
         <title>Diff Coverage</title>
+        {% if snippet_style %}
+        <style>
+            {{ snippet_style }}
+        </style>
+        {% endif %}
     </head>
     <body>
         <h1>Diff Coverage</h1>
@@ -39,5 +44,15 @@
         {% else %}
         <p>No lines with coverage information in this diff.</p>
         {% endif %}
+        {% for src_path, stats in src_stats.iteritems() %}
+        {% if stats.snippets_html %}
+        <div class="src-snippet">
+            <div class="src-name">{{ src_path }}</div>
+            {% for snippet in stats.snippets_html %}
+            {{ snippet }}
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endfor %}
     </body>
 </html>

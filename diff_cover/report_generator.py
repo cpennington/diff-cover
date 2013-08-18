@@ -5,6 +5,7 @@ Classes for generating diff coverage reports.
 from abc import ABCMeta, abstractmethod
 from jinja2 import Environment, PackageLoader
 from lazy import lazy
+from diff_cover.snippets import Snippet
 
 
 class DiffViolations(object):
@@ -188,6 +189,10 @@ class TemplateReportGenerator(BaseReportGenerator):
     # If not overridden, the template reporter will raise an exception
     TEMPLATE_NAME = None
 
+    # Subclasses should set this to True to indicate
+    # that they want to include source file snippets.
+    INCLUDE_SNIPPETS = False
+
     def generate_report(self, output_file):
         """
         See base class.
@@ -226,27 +231,47 @@ class TemplateReportGenerator(BaseReportGenerator):
         src_stats = {src: self._src_path_stats(src)
                      for src in self.src_paths()}
 
-        return {'report_names': self.coverage_report_name(),
-                'diff_name': self.diff_report_name(),
-                'src_stats': src_stats,
-                'total_num_lines': self.total_num_lines(),
-                'total_num_violations': self.total_num_violations(),
-                'total_percent_covered': self.total_percent_covered()}
+        # Include snippet style info if we're displaying
+        # source code snippets
+        if self.INCLUDE_SNIPPETS:
+            snippet_style = Snippet.style_defs()
+        else:
+            snippet_style = None
+
+        return {
+            'report_names': self.coverage_report_name(),
+            'diff_name': self.diff_report_name(),
+            'src_stats': src_stats,
+            'total_num_lines': self.total_num_lines(),
+            'total_num_violations': self.total_num_violations(),
+            'total_percent_covered': self.total_percent_covered(),
+            'snippet_style': snippet_style
+        }
 
     def _src_path_stats(self, src_path):
         """
         Return a dict of statistics for the source file at `src_path`.
         """
-        # Find violation lines
-        violation_lines = [str(line) for line
-                           in self.violation_lines(src_path)]
 
+        # Find violation lines
+        violation_lines = self.violation_lines(src_path)
         violations = sorted(self._diff_violations[src_path].violations)
+
+        # Load source snippets (if the report will display them)
+        # If we cannot load the file, then fail gracefully
+        if self.INCLUDE_SNIPPETS:
+            try:
+                snippets = Snippet.load_snippets_html(src_path, violation_lines)
+            except IOError:
+                snippets = []
+        else:
+            snippets = []
 
         return {
             'percent_covered': self.percent_covered(src_path),
-            'violation_lines': violation_lines,
-            'violations': violations
+            'violation_lines': [str(line) for line in violation_lines],
+            'violations': violations,
+            'snippets_html': snippets
         }
 
 
@@ -262,6 +287,7 @@ class HtmlReportGenerator(TemplateReportGenerator):
     Generate an HTML formatted diff coverage report.
     """
     TEMPLATE_NAME = "html_coverage_report.html"
+    INCLUDE_SNIPPETS = True
 
 
 class StringQualityReportGenerator(TemplateReportGenerator):

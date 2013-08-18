@@ -327,6 +327,8 @@ class HtmlReportGeneratorTest(BaseReportGeneratorTest):
 
     def test_one_snippet(self):
 
+        self.use_default_values()
+
         # Have the snippet loader always report
         # provide one snippet (for every source file)
         self.set_num_snippets(1)
@@ -336,6 +338,8 @@ class HtmlReportGeneratorTest(BaseReportGeneratorTest):
         self.assert_report(expected)
 
     def test_multiple_snippets(self):
+
+        self.use_default_values()
 
         # Have the snippet loader always report
         # multiple snippets for each source file
