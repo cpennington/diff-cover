@@ -3,7 +3,7 @@ from textwrap import dedent
 import os
 import tempfile
 from diff_cover.snippets import Snippet
-from diff_cover.tests.helpers import load_fixture, fixture_path
+from diff_cover.tests.helpers import load_fixture
 
 
 class SnippetTest(unittest.TestCase):
@@ -58,7 +58,7 @@ class SnippetTest(unittest.TestCase):
 
         # No filename extension: should default to text lexer
         self._assert_format(
-            self.SRC_CONTENTS, 'test', 
+            self.SRC_CONTENTS, 'test',
             4, [4, 6],
             self.FIXTURES['no_filename_ext']
         )
@@ -154,7 +154,7 @@ class SnippetLoaderTest(unittest.TestCase):
         the starting and ending lines expected in a snippet.
         Line numbers start at 1.
         """
-        
+
         # Load snippets from the source file
         snippet_list = Snippet.load_snippets(self._src_path,
                                              violation_lines)
@@ -187,6 +187,6 @@ class SnippetLoaderTest(unittest.TestCase):
         (Line 1, Line 2, ...).
         """
         return "\n".join([
-                "Line {0}".format(line_num)
-                for line_num in range(start_line, end_line + 1)
+            "Line {0}".format(line_num)
+            for line_num in range(start_line, end_line + 1)
         ])

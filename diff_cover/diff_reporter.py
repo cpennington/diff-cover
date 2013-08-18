@@ -133,8 +133,8 @@ class GitDiffReporter(BaseDiffReporter):
                     # Remove any lines from the dict that have been deleted
                     # Include any lines that have been added
                     result_dict[src_path] = \
-                            [line for line in result_dict.get(src_path, [])
-                             if not line in deleted_lines] + added_lines
+                        [line for line in result_dict.get(src_path, [])
+                         if not line in deleted_lines] + added_lines
 
             # Eliminate repeats and order line numbers
             for (src_path, lines) in result_dict.items():
@@ -329,7 +329,7 @@ class GitDiffReporter(BaseDiffReporter):
         The format of the hunk line is:
 
             @@ -k,l +n,m @@ TEXT
-        
+
         where `k,l` represent the start line and length before the changes
         and `n,m` represent the start line and length after the changes.
 

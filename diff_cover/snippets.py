@@ -72,8 +72,8 @@ class Snippet(object):
         """
         try:
             lexer = guess_lexer_for_filename(
-                        self._src_filename,
-                        self._src_str
+                self._src_filename,
+                self._src_str
             )
         except ClassNotFound:
             lexer = TextLexer()
@@ -83,8 +83,8 @@ class Snippet(object):
             linenos=True,
             linenostart=self._start_line,
             hl_lines=self._shift_lines(
-                        self._violation_lines,
-                        self._start_line
+                self._violation_lines,
+                self._start_line
             ),
             lineanchors=self._src_filename
         )
@@ -170,7 +170,10 @@ class Snippet(object):
 
                     # Expand to include extra context, but not after last line
                     snippet_end = line_num - lines_since_last_violation
-                    snippet_end = min(num_src_lines, snippet_end + cls.NUM_CONTEXT_LINES)
+                    snippet_end = min(
+                        num_src_lines,
+                        snippet_end + cls.NUM_CONTEXT_LINES
+                    )
                     current_range = (current_range[0], snippet_end)
 
                     # Store the snippet and start looking for the next one
@@ -203,5 +206,5 @@ class Snippet(object):
         be excluded from the list.
         """
         return [line_num - start_line + 1
-                for line_num in line_num_list 
+                for line_num in line_num_list
                 if line_num >= start_line]

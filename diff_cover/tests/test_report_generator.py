@@ -5,7 +5,7 @@ from textwrap import dedent
 from diff_cover.diff_reporter import BaseDiffReporter
 from diff_cover.violations_reporter import BaseViolationReporter, Violation
 from diff_cover.report_generator import BaseReportGenerator, \
-     HtmlReportGenerator, StringReportGenerator
+    HtmlReportGenerator, StringReportGenerator
 
 
 class SimpleReportGenerator(BaseReportGenerator):
@@ -133,7 +133,9 @@ class SimpleReportGeneratorTest(BaseReportGeneratorTest):
         # There are 6 lines that are both in the diff and measured,
         # and 4 of those are covered.
         for src_path in self.SRC_PATHS:
-            self.assertAlmostEqual(self.report.percent_covered(src_path), 4.0/6*100)
+            self.assertAlmostEqual(
+                self.report.percent_covered(src_path),
+                4.0 / 6 * 100)
 
     def test_violation_lines(self):
 
@@ -162,7 +164,8 @@ class SimpleReportGeneratorTest(BaseReportGeneratorTest):
     def test_total_num_lines(self):
 
         # By construction, each source file has the same coverage info
-        expected = len(self.SRC_PATHS) * len(set(self.MEASURED).intersection(self.LINES))
+        num_lines_in_file = len(set(self.MEASURED).intersection(self.LINES))
+        expected = len(self.SRC_PATHS) * num_lines_in_file
         self.assertEqual(self.report.total_num_lines(), expected)
 
     def test_total_num_missing(self):

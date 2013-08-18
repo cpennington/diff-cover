@@ -42,10 +42,13 @@ class ToolsIntegrationBase(unittest.TestCase):
     def _check_html_report(self, git_diff_path, coverage_xml_paths,
                            expected_html_path, quality_reporter='pep8'):
         """
-        If `coverage_xml_paths` is not empty, assert that given `git_diff_path`
-        and `coverage_xml_paths`, diff-cover generates the expected HTML report.
+        If `coverage_xml_paths` is not empty,
+        assert that given `git_diff_path`
+        and `coverage_xml_paths`, diff-cover
+        generates the expected HTML report.
 
-        If `coverage_xml_paths` is empty, asserts that given `git_diff_path` and
+        If `coverage_xml_paths` is empty,
+        asserts that given `git_diff_path` and
         `quality_reporter` generates the expected HTML report.
         """
 
@@ -59,9 +62,9 @@ class ToolsIntegrationBase(unittest.TestCase):
         self.addCleanup(lambda: shutil.rmtree(temp_dir))
         html_report_path = os.path.join(temp_dir, 'diff_coverage.html')
 
-
         if len(coverage_xml_paths) > 0:
-            input_list = ['diff-cover'] + coverage_xml_paths + ['--html-report', html_report_path]
+            input_list = ['diff-cover'] + coverage_xml_paths + \
+                         ['--html-report', html_report_path]
             self._set_sys_args(input_list)
 
         else:
@@ -82,10 +85,13 @@ class ToolsIntegrationBase(unittest.TestCase):
     def _check_console_report(self, git_diff_path, coverage_xml_paths,
                               expected_console_path, quality_reporter='pep8'):
         """
-        If `coverage_xml_paths` is not empty, assert that given `git_diff_path`
-        and `coverage_xml_paths`, diff-cover generates the expected console report.
+        If `coverage_xml_paths` is not empty,
+        assert that given `git_diff_path`
+        and `coverage_xml_paths`, diff-cover
+        generates the expected console report.
 
-        If `coverage_xml_paths` is empty, asserts that given `git_diff_path` and
+        If `coverage_xml_paths` is empty,
+        asserts that given `git_diff_path` and
         `quality_reporter` generates the expected console report.
         """
 

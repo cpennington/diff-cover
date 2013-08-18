@@ -3,7 +3,6 @@ Test helper functions.
 """
 import random
 import os.path
-import unittest
 
 HUNK_BUFFER = 2
 MAX_LINE_LENGTH = 300
