@@ -3,7 +3,7 @@ from textwrap import dedent
 import os
 import tempfile
 from diff_cover.snippets import Snippet
-from diff_cover.tests.helpers import load_fixture
+from diff_cover.tests.helpers import load_fixture, fixture_path
 
 
 class SnippetTest(unittest.TestCase):
@@ -142,6 +142,32 @@ class SnippetLoaderTest(unittest.TestCase):
         expected_ranges = []
         self._assert_line_range(violations, expected_ranges)
 
+    def test_load_snippets_html(self):
+
+        # Need to be in the fixture directory
+        # so the source path is displayed correctly
+        old_cwd = os.getcwd()
+        self.addCleanup(lambda: os.chdir(old_cwd))
+        os.chdir(fixture_path(''))
+
+        src_path = src_path=fixture_path('snippet_src.py')
+        self._init_src_file(100, src_path)
+
+        # One higher-level test to make sure
+        # the snippets are being rendered correctly
+        violations = [10, 12, 13, 50, 51, 54, 55, 57]
+        snippets_html = '\n\n'.join(
+            Snippet.load_snippets_html('snippet_src.py', violations)
+        )
+
+        # Load the fixture for the expected contents
+        expected_path = fixture_path('snippet_list.html')
+        with open(expected_path) as fixture_file:
+            expected = fixture_file.read()
+
+        # Check that we got what we expected
+        self.assertEqual(snippets_html, expected)
+
     def _assert_line_range(self, violation_lines, expected_ranges):
         """
         Assert that the snippets loaded using `violation_lines`
@@ -156,8 +182,9 @@ class SnippetLoaderTest(unittest.TestCase):
         """
 
         # Load snippets from the source file
-        snippet_list = Snippet.load_snippets(self._src_path,
-                                             violation_lines)
+        snippet_list = Snippet.load_snippets(
+            self._src_path, violation_lines
+        )
 
         # Check that we got the right number of snippets
         self.assertEqual(len(snippet_list), len(expected_ranges))
@@ -172,12 +199,16 @@ class SnippetLoaderTest(unittest.TestCase):
             start, end = line_range
             self.assertEqual(snippet.text(), self._src_lines(start, end))
 
-    def _init_src_file(self, num_src_lines):
+    def _init_src_file(self, num_src_lines, src_path=None):
         """
         Write to the temporary file "Line 1", "Line 2", etc.
         up to `num_src_lines`.
         """
-        with open(self._src_path, 'w') as src_file:
+        # If no source path specified, use the temp file
+        if src_path is None:
+            src_path = self._src_path
+
+        with open(src_path, 'w') as src_file:
             src_file.truncate()
             src_file.write(self._src_lines(1, num_src_lines))
 

@@ -107,6 +107,17 @@ class Snippet(object):
         return (self._start_line, end_line)
 
     @classmethod
+    def load_snippets_html(cls, src_path, violation_lines):
+        """
+        Load snippets from the file at `src_path` and format
+        them as HTML.
+
+        See `load_snippets()` for details.
+        """
+        snippet_list = cls.load_snippets(src_path, violation_lines)
+        return [snippet.html() for snippet in snippet_list]
+
+    @classmethod
     def load_snippets(cls, src_path, violation_lines):
         """
         Load snippets from the file at `src_path` to show
