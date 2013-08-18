@@ -6,6 +6,7 @@ from diff_cover.diff_reporter import BaseDiffReporter
 from diff_cover.violations_reporter import BaseViolationReporter, Violation
 from diff_cover.report_generator import BaseReportGenerator, \
     HtmlReportGenerator, StringReportGenerator
+from diff_cover.tests.helpers import load_fixture, assert_long_str_equal
 
 
 class SimpleReportGenerator(BaseReportGenerator):
@@ -37,11 +38,29 @@ class BaseReportGeneratorTest(unittest.TestCase):
     # Subclasses override this to provide the class under test
     REPORT_GENERATOR_CLASS = None
 
+    # Snippet returned by the mock
+    SNIPPET = u"<div>Snippet</div>"
+    SNIPPET_STYLE = '.css { color:red }'
+
     def setUp(self):
 
         # Create mocks of the dependencies
         self.coverage = mock.MagicMock(BaseViolationReporter)
         self.diff = mock.MagicMock(BaseDiffReporter)
+
+        # Patch snippet loading to always return the same string
+        self._load_snippets_html = mock.patch(
+            'diff_cover.snippets.Snippet.load_snippets_html'
+        ).start()
+
+        self.set_num_snippets(0)
+
+        # Patch snippet style
+        style_defs = mock.patch(
+            'diff_cover.snippets.Snippet.style_defs'
+        ).start()
+
+        style_defs.return_value = self.SNIPPET_STYLE
 
         # Set the names of the XML and diff reports
         self.coverage.name.return_value = self.XML_REPORT_NAME
@@ -61,6 +80,12 @@ class BaseReportGeneratorTest(unittest.TestCase):
 
         # Create a concrete instance of a report generator
         self.report = self.REPORT_GENERATOR_CLASS(self.coverage, self.diff)
+
+    def tearDown(self):
+        """
+        Undo all patches.
+        """
+        mock.patch.stopall()
 
     def set_src_paths_changed(self, src_paths):
         """
@@ -89,6 +114,14 @@ class BaseReportGeneratorTest(unittest.TestCase):
         """
         self._measured_dict.update({src_path: measured})
 
+    def set_num_snippets(self, num_snippets):
+        """
+        Patch the depdenency `Snippet.load_snippets_html()`
+        to return `num_snippets` of the fake snippet HTML.
+        """
+        self._load_snippets_html.return_value = \
+            num_snippets * [self.SNIPPET]
+
     def use_default_values(self):
         """
         Configure the mocks to use default values
@@ -103,6 +136,25 @@ class BaseReportGeneratorTest(unittest.TestCase):
             self.set_lines_changed(src, self.LINES)
             self.set_violations(src, self.VIOLATIONS)
             self.set_measured(src, self.MEASURED)
+            self.set_num_snippets(0)
+
+    def assert_report(self, expected):
+        """
+        Generate a report and assert that it matches
+        the string `expected`.
+        """
+        # Create a buffer for the output
+        output = StringIO.StringIO()
+
+        # Generate the report
+        self.report.generate_report(output)
+
+        # Get the output
+        output_str = output.getvalue()
+        output.close()
+
+        # Verify that we got the expected string
+        assert_long_str_equal(expected, output_str, strip=True)
 
 
 class SimpleReportGeneratorTest(BaseReportGeneratorTest):
@@ -189,17 +241,8 @@ class StringReportGeneratorTest(BaseReportGeneratorTest):
 
     def test_generate_report(self):
 
+        # Generate a default report
         self.use_default_values()
-
-        # Create a buffer for the output
-        output = StringIO.StringIO()
-
-        # Generate the report
-        self.report.generate_report(output)
-
-        # Get the output
-        output_str = output.getvalue().strip()
-        output.close()
 
         # Verify that we got the expected string
         expected = dedent("""
@@ -217,7 +260,7 @@ class StringReportGeneratorTest(BaseReportGeneratorTest):
         -------------
         """).strip()
 
-        self.assertEqual(output_str, expected)
+        self.assert_report(expected)
 
     def test_hundred_percent(self):
 
@@ -230,14 +273,6 @@ class StringReportGeneratorTest(BaseReportGeneratorTest):
         self.set_violations('file.py', [])
         self.set_measured('file.py', [2])
 
-        # Generate the report
-        self.report.generate_report(output)
-
-        # Get the output
-        output_str = output.getvalue().strip()
-        output.close()
-
-        # Verify that we got the expected string
         expected = dedent("""
         -------------
         Diff Coverage
@@ -252,24 +287,13 @@ class StringReportGeneratorTest(BaseReportGeneratorTest):
         -------------
         """).strip()
 
-        self.assertEqual(output_str, expected)
+        self.assert_report(expected)
 
     def test_empty_report(self):
 
         # Have the dependencies return an empty report
         # (this is the default)
 
-        # Create a buffer for the output
-        output = StringIO.StringIO()
-
-        # Generate the report
-        self.report.generate_report(output)
-
-        # Get the output
-        output_str = output.getvalue().strip()
-        output.close()
-
-        # Verify that we got the expected string
         expected = dedent("""
         -------------
         Diff Coverage
@@ -280,7 +304,7 @@ class StringReportGeneratorTest(BaseReportGeneratorTest):
         -------------
         """).strip()
 
-        self.assertEqual(output_str, expected)
+        self.assert_report(expected)
 
 
 class HtmlReportGeneratorTest(BaseReportGeneratorTest):
@@ -288,89 +312,35 @@ class HtmlReportGeneratorTest(BaseReportGeneratorTest):
     REPORT_GENERATOR_CLASS = HtmlReportGenerator
 
     def test_generate_report(self):
-
         self.use_default_values()
-
-        # Create a buffer for the output
-        output = StringIO.StringIO()
-
-        # Generate the report
-        self.report.generate_report(output)
-
-        # Get the output
-        output_str = output.getvalue()
-        output.close()
-
-        # Verify that we got the expected string
-        expected = dedent("""
-        <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
-        <html>
-        <head>
-        <meta http-equiv='Content-Type' content='text/html; charset=utf-8'>
-        <title>Diff Coverage</title>
-        </head>
-        <body>
-        <h1>Diff Coverage</h1>
-        <p>Coverage Report(s) Used: reports/coverage.xml</p>
-        <p>Diff: master</p>
-        <table border="1">
-        <tr>
-        <th>Source File</th>
-        <th>Diff Coverage (%)</th>
-        <th>Missing Line(s)</th>
-        </tr>
-        <tr>
-        <td>file1.py</td>
-        <td>66.7%</td>
-        <td>10,11</td>
-        </tr>
-        <tr>
-        <td>subdir/file2.py</td>
-        <td>66.7%</td>
-        <td>10,11</td>
-        </tr>
-        </table>
-        <ul>
-        <li><b>Total</b>: 12 line(s)</li>
-        <li><b>Missing</b>: 4 line(s)</li>
-        <li><b>Coverage</b>: 66%</li>
-        </ul>
-        </body>
-        </html>
-        """).strip()
-
-        self.assertEqual(output_str, expected)
+        expected = load_fixture('html_report.html')
+        self.assert_report(expected)
 
     def test_empty_report(self):
 
         # Have the dependencies return an empty report
         # (this is the default)
 
-        # Create a buffer for the output
-        output = StringIO.StringIO()
+        # Verify that we got the expected string
+        expected = load_fixture('html_report_empty.html')
+        self.assert_report(expected)
 
-        # Generate the report
-        self.report.generate_report(output)
+    def test_one_snippet(self):
 
-        # Get the output
-        output_str = output.getvalue()
-        output.close()
+        # Have the snippet loader always report
+        # provide one snippet (for every source file)
+        self.set_num_snippets(1)
 
         # Verify that we got the expected string
-        expected = dedent("""
-        <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
-        <html>
-        <head>
-        <meta http-equiv='Content-Type' content='text/html; charset=utf-8'>
-        <title>Diff Coverage</title>
-        </head>
-        <body>
-        <h1>Diff Coverage</h1>
-        <p>Coverage Report(s) Used: reports/coverage.xml</p>
-        <p>Diff: master</p>
-        <p>No lines with coverage information in this diff.</p>
-        </body>
-        </html>
-        """).strip()
+        expected = load_fixture('html_report_one_snippet.html').strip()
+        self.assert_report(expected)
 
-        self.assertEqual(output_str, expected)
+    def test_multiple_snippets(self):
+
+        # Have the snippet loader always report
+        # multiple snippets for each source file
+        self.set_num_snippets(2)
+
+        # Verify that we got the expected string
+        expected = load_fixture('html_report_two_snippets.html').strip()
+        self.assert_report(expected)

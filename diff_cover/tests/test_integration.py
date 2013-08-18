@@ -12,7 +12,7 @@ import tempfile
 import shutil
 from diff_cover.tool import main
 from diff_cover.diff_reporter import GitDiffError
-from diff_cover.tests.helpers import fixture_path
+from diff_cover.tests.helpers import fixture_path, assert_long_str_equal
 
 
 class ToolsIntegrationBase(unittest.TestCase):
@@ -80,7 +80,7 @@ class ToolsIntegrationBase(unittest.TestCase):
             with open(html_report_path) as html_report:
                 html = html_report.read()
                 expected = expected_file.read()
-                self.assertEqual(html, expected)
+                assert_long_str_equal(expected, html, strip=True)
 
     def _check_console_report(self, git_diff_path, coverage_xml_paths,
                               expected_console_path, quality_reporter='pep8'):
@@ -118,7 +118,7 @@ class ToolsIntegrationBase(unittest.TestCase):
         with open(expected_console_path) as expected_file:
             report = string_buffer.getvalue()
             expected = expected_file.read()
-            self.assertEqual(report, expected)
+            assert_long_str_equal(expected, report, strip=True)
 
     def _set_sys_args(self, argv):
         """

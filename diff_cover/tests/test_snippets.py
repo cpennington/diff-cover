@@ -150,7 +150,7 @@ class SnippetLoaderTest(unittest.TestCase):
         self.addCleanup(lambda: os.chdir(old_cwd))
         os.chdir(fixture_path(''))
 
-        src_path = src_path=fixture_path('snippet_src.py')
+        src_path = fixture_path('snippet_src.py')
         self._init_src_file(100, src_path)
 
         # One higher-level test to make sure
