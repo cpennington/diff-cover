@@ -1,5 +1,7 @@
 
 
+    * Coverage report now includes snippets from the original source file
+
     * Added --no-ext to git diff command
 
 8/9/13 v0.2.1
