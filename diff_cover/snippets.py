@@ -78,6 +78,10 @@ class Snippet(object):
         except ClassNotFound:
             lexer = TextLexer()
 
+        # Ensure that we don't strip newlines from
+        # the source file when lexing.
+        lexer.stripnl = False
+
         formatter = HtmlFormatter(
             cssclass=self.DIV_CSS_CLASS,
             linenos=True,
