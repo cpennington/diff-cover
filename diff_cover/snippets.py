@@ -177,7 +177,10 @@ class Snippet(object):
             # can end the snippet (have we gone enough
             # lines without hitting a violation?)
             elif current_range[1] is None:
-                if lines_since_last_violation > cls.MAX_GAP_IN_SNIPPET:
+                if line_num in violation_lines:
+                    lines_since_last_violation = 0
+
+                elif lines_since_last_violation > cls.MAX_GAP_IN_SNIPPET:
 
                     # Expand to include extra context, but not after last line
                     snippet_end = line_num - lines_since_last_violation
@@ -190,9 +193,6 @@ class Snippet(object):
                     # Store the snippet and start looking for the next one
                     snippet_ranges.append(current_range)
                     current_range = (None, None)
-
-                elif line_num in violation_lines:
-                    lines_since_last_violation = 0
 
             # Another line since the last violation
             lines_since_last_violation += 1

@@ -142,6 +142,16 @@ class SnippetLoaderTest(unittest.TestCase):
         expected_ranges = []
         self._assert_line_range(violations, expected_ranges)
 
+    def test_end_range_on_violation(self):
+        self._init_src_file(40)
+
+        # With context, the range for the snippet at 28 is 33
+        # Expect that the snippet expands to include the violation
+        # at the border.
+        violations = [28, 33]
+        expected_ranges = [(24, 37)]
+        self._assert_line_range(violations, expected_ranges)
+
     def test_load_snippets_html(self):
 
         # Need to be in the fixture directory
