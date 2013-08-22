@@ -6,8 +6,11 @@
         <style>
             .src-snippet { margin-top: 2em; }
             .src-name { font-weight: bold; }
-            .snippettable { border: 1px solid #bdbdbd; }
-.hll { background-color: #ffcccc }
+            .snippets {
+                border-top: 1px solid #bdbdbd;
+                border-bottom: 1px solid #bdbdbd;
+            }
+            .hll { background-color: #ffcccc }
 .c { color: #408080; font-style: italic } /* Comment */
 .err { border: 1px solid #FF0000 } /* Error */
 .k { color: #008000; font-weight: bold } /* Keyword */
@@ -93,6 +96,7 @@
         </table>
         <div class="src-snippet">
             <div class="src-name">test_src.txt</div>
+            <div class="snippets">
             <table class="snippettable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
  2
  3
@@ -114,6 +118,7 @@
 <a name="test_src.txt-10"></a><span class="hll">test 10
 </span></pre></div>
 </td></tr></table>
+            </div>
         </div>
     </body>
 </html>

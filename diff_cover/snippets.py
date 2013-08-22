@@ -16,7 +16,6 @@ class Snippet(object):
 
     VIOLATION_COLOR = '#ffcccc'
     DIV_CSS_CLASS = 'snippet'
-    BORDER_CSS = "{ border: 1px solid #bdbdbd; }"
 
     # Number of extra lines to include before and after
     # each snippet to provide context.
@@ -60,11 +59,7 @@ class Snippet(object):
         """
         formatter = HtmlFormatter()
         formatter.style.highlight_color = cls.VIOLATION_COLOR
-        border_css = ".{0}table {1}\n".format(
-            cls.DIV_CSS_CLASS,
-            cls.BORDER_CSS
-        )
-        return border_css + formatter.get_style_defs()
+        return formatter.get_style_defs()
 
     def html(self):
         """

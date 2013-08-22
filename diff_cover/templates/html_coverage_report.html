@@ -7,6 +7,10 @@
         <style>
             .src-snippet { margin-top: 2em; }
             .src-name { font-weight: bold; }
+            .snippets {
+                border-top: 1px solid #bdbdbd;
+                border-bottom: 1px solid #bdbdbd;
+            }
             {{ snippet_style }}
         </style>
         {% endif %}
@@ -50,9 +54,11 @@
         {% if stats.snippets_html %}
         <div class="src-snippet">
             <div class="src-name">{{ src_path }}</div>
+            <div class="snippets">
             {% for snippet in stats.snippets_html %}
             {{ snippet }}
             {% endfor %}
+            </div>
         </div>
         {% endif %}
         {% endfor %}
