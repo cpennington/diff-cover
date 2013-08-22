@@ -2,7 +2,6 @@
 High-level integration tests of diff-cover tool.
 """
 
-import unittest
 from mock import patch, Mock
 import os
 import os.path
@@ -12,7 +11,8 @@ import tempfile
 import shutil
 from diff_cover.tool import main
 from diff_cover.diff_reporter import GitDiffError
-from diff_cover.tests.helpers import fixture_path, assert_long_str_equal
+from diff_cover.tests.helpers import fixture_path, \
+    assert_long_str_equal, unittest
 
 
 class ToolsIntegrationBase(unittest.TestCase):

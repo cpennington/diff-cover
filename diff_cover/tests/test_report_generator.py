@@ -1,4 +1,3 @@
-import unittest
 import mock
 import StringIO
 from textwrap import dedent
@@ -6,7 +5,8 @@ from diff_cover.diff_reporter import BaseDiffReporter
 from diff_cover.violations_reporter import BaseViolationReporter, Violation
 from diff_cover.report_generator import BaseReportGenerator, \
     HtmlReportGenerator, StringReportGenerator
-from diff_cover.tests.helpers import load_fixture, assert_long_str_equal
+from diff_cover.tests.helpers import load_fixture, \
+    assert_long_str_equal, unittest
 
 
 class SimpleReportGenerator(BaseReportGenerator):
