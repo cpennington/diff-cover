@@ -3,7 +3,7 @@ Load snippets from source files to show violation lines
 in HTML reports.
 """
 
-from pygments import highlight
+import pygments
 from pygments.lexers import TextLexer, guess_lexer_for_filename
 from pygments.formatters import HtmlFormatter
 from pygments.util import ClassNotFound
@@ -26,10 +26,14 @@ class Snippet(object):
     # should split into two snippets.
     MAX_GAP_IN_SNIPPET = 4
 
-    def __init__(self, src_str, src_filename,
+    def __init__(self, src_tokens, src_filename,
                  start_line, violation_lines):
         """
         Create a source code snippet.
+
+        `src_tokens` is a list of `(token_type, value)`
+        tuples, parsed from the source file.
+        NOTE: `value` must be `unicode`, not a `str`
 
         `src_filename` is the name of the source file,
         used to determine the source file language.
@@ -46,7 +50,7 @@ class Snippet(object):
         if start_line < 1:
             raise ValueError('Start line must be >= 1')
 
-        self._src_str = src_str
+        self._src_tokens = src_tokens
         self._src_filename = src_filename
         self._start_line = start_line
         self._violation_lines = violation_lines
@@ -65,18 +69,6 @@ class Snippet(object):
         """
         Return an HTML representation of the snippet.
         """
-        try:
-            lexer = guess_lexer_for_filename(
-                self._src_filename,
-                self._src_str
-            )
-        except ClassNotFound:
-            lexer = TextLexer()
-
-        # Ensure that we don't strip newlines from
-        # the source file when lexing.
-        lexer.stripnl = False
-
         formatter = HtmlFormatter(
             cssclass=self.DIV_CSS_CLASS,
             linenos=True,
@@ -88,22 +80,29 @@ class Snippet(object):
             lineanchors=self._src_filename
         )
 
-        return highlight(self._src_str, lexer, formatter)
+        return pygments.format(self.src_tokens(), formatter)
 
-    def text(self):
+    def src_tokens(self):
         """
-        Return a text (unicode) representation of the snippet.
+        Return a list of `(token_type, value)` tokens
+        parsed from the source file.
         """
-        return self._src_str
+        return self._src_tokens
 
     def line_range(self):
         """
         Return a tuple of the form `(start_line, end_line)`
         indicating the start and end line number of the snippet.
         """
-        num_lines = len(self._src_str.split('\n'))
+        num_lines = len(self.text().split('\n'))
         end_line = self._start_line + num_lines - 1
         return (self._start_line, end_line)
+
+    def text(self):
+        """
+        Return the source text for the snippet.
+        """
+        return ''.join([val for _, val in self._src_tokens])
 
     @classmethod
     def load_snippets_html(cls, src_path, violation_lines):
@@ -137,14 +136,111 @@ class Snippet(object):
         src_lines = contents.split('\n')
         snippet_ranges = cls._snippet_ranges(len(src_lines), violation_lines)
 
-        # Convert the snippet ranges into snippet objects
+        # Parse the source into tokens
+        token_stream = cls._parse_src(contents, src_path)
+
+        # Group the tokens by snippet
+        token_groups = cls._group_tokens(token_stream, snippet_ranges)
+
         return [
-            Snippet(
-                "\n".join(src_lines[start - 1:end]),
-                src_path,
-                start, violation_lines
-            ) for (start, end) in snippet_ranges
+            Snippet(tokens, src_path, start, violation_lines)
+            for (start, _), tokens in token_groups.iteritems()
         ]
+
+    @classmethod
+    def _parse_src(cls, src_contents, src_filename):
+        """
+        Return a stream of `(token_type, value)` tuples
+        parsed from `src_contents` (str)
+
+        Uses `src_filename` to guess the type of file
+        so it can highlight syntax correctly.
+        """
+
+        # Parse the source into tokens
+        try:
+            lexer = guess_lexer_for_filename(src_filename, src_contents)
+        except ClassNotFound:
+            lexer = TextLexer()
+
+        # Ensure that we don't strip newlines from
+        # the source file when lexing.
+        lexer.stripnl = False
+
+        return pygments.lex(src_contents, lexer)
+
+    @classmethod
+    def _group_tokens(cls, token_stream, range_list):
+        """
+        Group tokens into snippet ranges.
+
+        `token_stream` is a generator that produces
+        `(token_type, value)` tuples,
+
+        `range_list` is a list of `(start, end)` tuples representing
+        the (inclusive) range of line numbers for each snippet.
+
+        Assumes that `range_list` is an ascending order by start value.
+
+        Returns a dict mapping ranges to lists of tokens:
+        {
+            (4, 10): [(ttype_1, val_1), (ttype_2, val_2), ...],
+            (29, 39): [(ttype_3, val_3), ...],
+            ...
+        }
+
+        The algorithm is slightly complicated because a single token
+        can contain multiple line breaks.
+        """
+
+        # Create a map from ranges (start/end tuples) to tokens
+        token_map = {rng:[] for rng in range_list}
+
+        # Keep track of the current line number; we will
+        # increment this as we encounter newlines in token values
+        line_num = 1
+
+        for ttype, val in token_stream:
+
+            # If there are newlines in this token,
+            # we need to split it up and check whether
+            # each line within the token is within one
+            # of our ranges.
+            if '\n' in val:
+                val_lines = val.split('\n')
+
+                # Check if the tokens match each range
+                for (start, end), filtered_tokens in token_map.iteritems():
+
+                    # Filter out lines that are not in this range
+                    include_vals = [
+                        val_lines[i] for i in
+                        range(0, len(val_lines))
+                        if i + line_num in range(start, end + 1)
+                    ]
+
+                    # If we found any lines, store the tokens
+                    if len(include_vals) > 0:
+                        token = (ttype, '\n'.join(include_vals))
+                        filtered_tokens.append(token)
+
+                # Increment the line number
+                # by the number of lines we found
+                line_num += len(val_lines) - 1
+
+            # No newline in this token
+            # If we're in the line range, add it
+            else:
+                # Check if the tokens match each range
+                for (start, end), filtered_tokens in token_map.iteritems():
+
+                    # If we got a match, store the token
+                    if line_num in range(start, end + 1):
+                        filtered_tokens.append((ttype, val))
+
+                    # Otherwise, ignore the token
+
+        return token_map
 
     @classmethod
     def _snippet_ranges(cls, num_src_lines, violation_lines):

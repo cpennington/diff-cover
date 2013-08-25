@@ -2,18 +2,40 @@ import unittest
 from textwrap import dedent
 import os
 import tempfile
+from pygments.token import Token
 from diff_cover.snippets import Snippet
-from diff_cover.tests.helpers import load_fixture, fixture_path
+from diff_cover.tests.helpers import load_fixture,\
+    fixture_path, assert_long_str_equal
 
 
 class SnippetTest(unittest.TestCase):
 
-    SRC_CONTENTS = dedent("""
-        # Test source
-        def test_func(arg):
-            print arg
-            return arg + 5
-    """).strip()
+    SRC_TOKENS = [
+        (Token.Comment, u'# Test source'),
+        (Token.Text, u'\n'),
+        (Token.Keyword, u'def'),
+        (Token.Text, u' '),
+        (Token.Name.Function, u'test_func'),
+        (Token.Punctuation, u'('),
+        (Token.Name, u'arg'),
+        (Token.Punctuation, u')'),
+        (Token.Punctuation, u':'),
+        (Token.Text, u'\n'),
+        (Token.Text, u'    '),
+        (Token.Keyword, u'print'),
+        (Token.Text, u' '),
+        (Token.Name, u'arg'),
+        (Token.Text, u'\n'),
+        (Token.Text, u'    '),
+        (Token.Keyword, u'return'),
+        (Token.Text, u' '),
+        (Token.Name, u'arg'),
+        (Token.Text, u' '),
+        (Token.Operator, u'+'),
+        (Token.Text, u' '),
+        (Token.Literal.Number.Integer, u'5'),
+        (Token.Text, u'\n'),
+    ]
 
     FIXTURES = {
         'style': 'snippet.css',
@@ -35,7 +57,7 @@ class SnippetTest(unittest.TestCase):
 
     def test_format(self):
         self._assert_format(
-            self.SRC_CONTENTS, 'test.py',
+            self.SRC_TOKENS, 'test.py',
             4, [4, 6], self.FIXTURES['default']
         )
 
@@ -49,7 +71,7 @@ class SnippetTest(unittest.TestCase):
         # Violation lines outside the range of lines in the file
         # should be ignored.
         self._assert_format(
-            self.SRC_CONTENTS, 'test.py',
+            self.SRC_TOKENS, 'test.py',
             1, [-1, 0, 5, 6],
             self.FIXTURES['invalid_violations']
         )
@@ -58,31 +80,31 @@ class SnippetTest(unittest.TestCase):
 
         # No filename extension: should default to text lexer
         self._assert_format(
-            self.SRC_CONTENTS, 'test',
+            self.SRC_TOKENS, 'test',
             4, [4, 6],
             self.FIXTURES['no_filename_ext']
         )
 
     def test_unicode(self):
 
-        unicode_src = u'var = \u0123 \u5872 \u3389'
+        unicode_src = [(Token.Text, u'var = \u0123 \u5872 \u3389')]
 
         self._assert_format(
             unicode_src, 'test.py',
             1, [], self.FIXTURES['unicode']
         )
 
-    def _assert_format(self, src_str, src_filename,
+    def _assert_format(self, src_tokens, src_filename,
                        start_line, violation_lines,
                        expected_fixture):
 
-        snippet = Snippet(src_str, src_filename,
+        snippet = Snippet(src_tokens, src_filename,
                           start_line, violation_lines)
         result = snippet.html()
 
         expected_str = load_fixture(expected_fixture, encoding='utf-8')
 
-        self.assertEqual(result, expected_str)
+        assert_long_str_equal(expected_str, result, strip=True)
         self.assertTrue(isinstance(result, unicode))
 
 
@@ -176,7 +198,7 @@ class SnippetLoaderTest(unittest.TestCase):
             expected = fixture_file.read()
 
         # Check that we got what we expected
-        self.assertEqual(snippets_html, expected)
+        assert_long_str_equal(expected, snippets_html, strip=True)
 
     def _assert_line_range(self, violation_lines, expected_ranges):
         """
