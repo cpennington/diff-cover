@@ -3,7 +3,8 @@ from textwrap import dedent
 import os
 import tempfile
 from diff_cover.snippets import Snippet
-from diff_cover.tests.helpers import load_fixture, fixture_path
+from diff_cover.tests.helpers import load_fixture,\
+    fixture_path, assert_long_str_equal
 
 
 class SnippetTest(unittest.TestCase):
@@ -82,7 +83,7 @@ class SnippetTest(unittest.TestCase):
 
         expected_str = load_fixture(expected_fixture, encoding='utf-8')
 
-        self.assertEqual(result, expected_str)
+        assert_long_str_equal(expected_str, result, strip=True)
         self.assertTrue(isinstance(result, unicode))
 
 
@@ -176,7 +177,7 @@ class SnippetLoaderTest(unittest.TestCase):
             expected = fixture_file.read()
 
         # Check that we got what we expected
-        self.assertEqual(snippets_html, expected)
+        assert_long_str_equal(expected, snippets_html, strip=True)
 
     def _assert_line_range(self, violation_lines, expected_ranges):
         """

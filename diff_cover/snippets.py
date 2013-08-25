@@ -4,9 +4,8 @@ in HTML reports.
 """
 
 from pygments import highlight
-from pygments.lexers import TextLexer, guess_lexer_for_filename
+from pygments.lexers import TextLexer
 from pygments.formatters import HtmlFormatter
-from pygments.util import ClassNotFound
 
 
 class Snippet(object):
@@ -65,13 +64,7 @@ class Snippet(object):
         """
         Return an HTML representation of the snippet.
         """
-        try:
-            lexer = guess_lexer_for_filename(
-                self._src_filename,
-                self._src_str
-            )
-        except ClassNotFound:
-            lexer = TextLexer()
+        lexer = TextLexer()
 
         # Ensure that we don't strip newlines from
         # the source file when lexing.
